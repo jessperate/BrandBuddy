@@ -1,97 +1,7 @@
 import { useState } from 'react'
-import { Copy, Check } from 'lucide-react'
-
-// ─── Brand Data ────────────────────────────────────────────────────────────
-
-const BRAND_COLORS = [
-  { name: 'Near Black',   hex: '#000d05', variable: '--color-near-black',   usage: 'Primary text, key UI' },
-  { name: 'Green 500',    hex: '#008c44', variable: '--color-green-500',    usage: 'Primary CTAs, brand' },
-  { name: 'Green 600',    hex: '#002910', variable: '--color-green-600',    usage: 'Hero backgrounds' },
-  { name: 'Interaction',  hex: '#00ff64', variable: '--color-interaction',  usage: 'Hover, active states' },
-  { name: 'Green 200',    hex: '#CCFFE0', variable: '--color-green-200',    usage: 'Highlight tints' },
-  { name: 'Stroke Green', hex: '#d4e8da', variable: '--color-stroke-green', usage: 'Borders, dividers' },
-  { name: 'Accent Label', hex: '#EEFF8C', variable: '--color-accent-label', usage: 'Pill / tag fills' },
-  { name: 'White',        hex: '#ffffff', variable: '--background',         usage: 'Page backgrounds' },
-]
-
-const TEXT_COLORS = [
-  { name: 'Text Primary',   hex: '#000d05', variable: '--color-text-primary',   usage: 'Body copy' },
-  { name: 'Text Secondary', hex: '#676c79', variable: '--color-text-secondary', usage: 'Captions, meta' },
-  { name: 'Text Tertiary',  hex: '#a5aab6', variable: '--color-text-tertiary',  usage: 'Disabled, placeholder' },
-]
-
-const SECONDARY_PALETTE: { hex: string; hue: string; tier: string }[] = [
-  { hex: '#EEF5F1', hue: 'Green',   tier: '50' },
-  { hex: '#F5F5E8', hue: 'Olive',   tier: '50' },
-  { hex: '#E8EEF5', hue: 'Teal',    tier: '50' },
-  { hex: '#E8E8F8', hue: 'Navy',    tier: '50' },
-  { hex: '#EEE8F8', hue: 'Purple',  tier: '50' },
-  { hex: '#F8E8F0', hue: 'Magenta', tier: '50' },
-  { hex: '#F8EEE8', hue: 'Brown',   tier: '50' },
-  { hex: '#D4E8DA', hue: 'Green',   tier: '100' },
-  { hex: '#F4FFB8', hue: 'Olive',   tier: '100' },
-  { hex: '#B8D8F0', hue: 'Teal',    tier: '100' },
-  { hex: '#C8C8FF', hue: 'Navy',    tier: '100' },
-  { hex: '#D8C8F0', hue: 'Purple',  tier: '100' },
-  { hex: '#F0C8D8', hue: 'Magenta', tier: '100' },
-  { hex: '#F0D0C8', hue: 'Brown',   tier: '100' },
-  { hex: '#2D8859', hue: 'Green',   tier: '500' },
-  { hex: '#88882D', hue: 'Olive',   tier: '500' },
-  { hex: '#2D6B7A', hue: 'Teal',    tier: '500' },
-  { hex: '#0000CC', hue: 'Navy',    tier: '500' },
-  { hex: '#6B3D8B', hue: 'Purple',  tier: '500' },
-  { hex: '#83428B', hue: 'Magenta', tier: '500' },
-  { hex: '#8B4D42', hue: 'Brown',   tier: '500' },
-  { hex: '#002910', hue: 'Green',   tier: '900' },
-  { hex: '#2E2800', hue: 'Olive',   tier: '900' },
-  { hex: '#00212B', hue: 'Teal',    tier: '900' },
-  { hex: '#00006B', hue: 'Navy',    tier: '900' },
-  { hex: '#280040', hue: 'Purple',  tier: '900' },
-  { hex: '#3B0020', hue: 'Magenta', tier: '900' },
-  { hex: '#2B1200', hue: 'Brown',   tier: '900' },
-]
-
-const SEC_HUES = ['Green', 'Olive', 'Teal', 'Navy', 'Purple', 'Magenta', 'Brown']
-const SEC_TIERS = ['50', '100', '500', '900']
-
-const TYPE_SCALE = [
-  { name: 'Display',       family: 'Georgia, serif',        size: '56px', weight: 400, tracking: '-0.02em', lh: 1.1, usage: 'Hero headlines' },
-  { name: 'H3',            family: 'Georgia, serif',        size: '32px', weight: 400, tracking: '-0.02em', lh: 1.2, usage: 'Section headings' },
-  { name: 'H4 / UI Title', family: "'DM Sans', sans-serif", size: '20px', weight: 600, tracking: '-0.01em', lh: 1.3, usage: 'UI titles, labels' },
-  { name: 'Body',          family: "'DM Sans', sans-serif", size: '16px', weight: 400, tracking: '0',       lh: 1.6, usage: 'Running text' },
-  { name: 'Caption',       family: "'DM Sans', sans-serif", size: '14px', weight: 400, tracking: '0',       lh: 1.5, usage: 'Metadata, captions' },
-  { name: 'Label / Pill',  family: "'DM Mono', monospace",  size: '11px', weight: 500, tracking: '0.08em',  lh: 1,   usage: 'Tags, axis values' },
-]
-
-const FONTS = [
-  {
-    name: 'DM Sans',
-    role: 'Sans-serif — UI & Body',
-    variable: '--font-sans',
-    specimen: 'The quick brown fox jumps over the lazy dog.',
-    family: "'DM Sans', sans-serif",
-    weights: [300, 400, 500, 600, 700],
-    note: 'Used for all UI copy, body text, buttons, and labels. Production equivalent: Saans.',
-  },
-  {
-    name: 'Georgia',
-    role: 'Serif — Display & Headings',
-    variable: '--font-serif',
-    specimen: 'The quick brown fox jumps over the lazy dog.',
-    family: 'Georgia, serif',
-    weights: [400, 700],
-    note: 'Reserved for large display headings and editorial moments. Production equivalent: Serrif VF.',
-  },
-  {
-    name: 'DM Mono',
-    role: 'Monospace — Labels & Tags',
-    variable: '--font-mono',
-    specimen: 'const brand = "AirOps";',
-    family: "'DM Mono', monospace",
-    weights: [400, 500],
-    note: 'Used for pills, tags, data labels, and code snippets. Production equivalent: Saans Mono.',
-  },
-]
+import { Copy, Check, Plus, X } from 'lucide-react'
+import type { BrandData, ColorEntry, SecondaryColor } from './types'
+import { AIROPS_BRAND } from './data/airops'
 
 // ─── Utilities ────────────────────────────────────────────────────────────
 
@@ -102,364 +12,751 @@ function isLight(hex: string): boolean {
   return (r * 299 + g * 587 + b * 114) / 1000 > 128
 }
 
-// ─── Components ───────────────────────────────────────────────────────────
+function fontFamily(brand: BrandData, role: 'serif' | 'sans' | 'mono'): string {
+  return brand.fonts[role].fallback
+}
 
-function CopyButton({ text }: { text: string }) {
+// ─── Shared UI ────────────────────────────────────────────────────────────
+
+function CopyBtn({ text }: { text: string }) {
   const [copied, setCopied] = useState(false)
-  const copy = () => {
-    navigator.clipboard.writeText(text)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1500)
-  }
   return (
-    <button
-      onClick={copy}
-      style={{
-        background: 'none', border: 'none', cursor: 'pointer',
-        padding: '2px', display: 'flex', alignItems: 'center',
-        color: 'var(--color-text-tertiary)',
-      }}
-    >
-      {copied ? <Check size={12} color="#008c44" /> : <Copy size={12} />}
+    <button onClick={() => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 1500) }}
+      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', display: 'flex', alignItems: 'center', color: '#a5aab6' }}>
+      {copied ? <Check size={11} color="#008c44" /> : <Copy size={11} />}
     </button>
   )
 }
 
-function SectionLabel({ children }: { children: React.ReactNode }) {
+function Tag({ children, color }: { children: React.ReactNode; color?: string }) {
   return (
-    <div style={{
-      fontFamily: "'DM Mono', monospace", fontSize: '11px', fontWeight: 500,
-      letterSpacing: '0.08em', color: 'var(--color-text-secondary)',
-      textTransform: 'uppercase', marginBottom: '16px',
-    }}>
+    <span style={{
+      fontFamily: "'DM Mono', monospace", fontSize: '10px', fontWeight: 500,
+      letterSpacing: '0.08em', textTransform: 'uppercase',
+      padding: '2px 8px', background: color ?? '#f8fffb',
+      border: '1px solid #d4e8da', color: '#676c79',
+    }}>{children}</span>
+  )
+}
+
+function SectionLabel({ index, children }: { index: string; children: React.ReactNode }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', fontWeight: 500, letterSpacing: '0.1em', color: '#a5aab6' }}>{index}</span>
+      <div style={{ flex: 1, height: '1px', background: '#d4e8da' }} />
+      <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#676c79' }}>{children}</span>
+    </div>
+  )
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 400, letterSpacing: '-0.02em', margin: '0 0 8px', color: '#000d05', lineHeight: 1.2 }}>
+      {children}
+    </h2>
+  )
+}
+
+function SubLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', fontWeight: 500, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#a5aab6', marginBottom: '12px', marginTop: '32px' }}>
       {children}
     </div>
   )
 }
 
 function Divider() {
-  return <div style={{ borderTop: '1px solid var(--border)', margin: '64px 0' }} />
+  return <div style={{ borderTop: '1px solid #d4e8da', margin: '64px 0' }} />
 }
 
-function ColorSwatch({ hex, name, variable, usage }: {
-  hex: string; name: string; variable?: string; usage?: string
-}) {
+// ─── Color Swatch ─────────────────────────────────────────────────────────
+
+function ColorSwatch({ c }: { c: ColorEntry }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-      <div style={{
-        width: '100%', aspectRatio: '1', background: hex,
-        border: hex === '#ffffff' || hex === '#F8FFFA' ? '1px solid var(--border)' : 'none',
-      }} />
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', justifyContent: 'space-between' }}>
-          <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-            {name}
-          </span>
-          <CopyButton text={hex} />
+      <div style={{ width: '100%', aspectRatio: '1', background: c.hex, border: isLight(c.hex) && c.hex !== '#000d05' ? '1px solid #d4e8da' : 'none' }} />
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: '#000d05' }}>{c.name}</span>
+          <CopyBtn text={c.hex} />
         </div>
-        <span style={{
-          fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'var(--color-text-secondary)',
-          letterSpacing: '0.04em',
-        }}>
-          {hex.toUpperCase()}
-        </span>
-        {variable && (
-          <span style={{
-            fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'var(--color-text-tertiary)',
-            letterSpacing: '0.02em',
-          }}>
-            {variable}
-          </span>
-        )}
-        {usage && (
-          <span style={{ fontSize: '11px', color: 'var(--color-text-secondary)', marginTop: '2px' }}>
-            {usage}
-          </span>
-        )}
+        <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#676c79', letterSpacing: '0.04em' }}>{c.hex.toUpperCase()}</div>
+        {c.variable && <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#a5aab6' }}>{c.variable}</div>}
+        {c.usage && <div style={{ fontSize: '11px', color: '#676c79', marginTop: '2px' }}>{c.usage}</div>}
       </div>
     </div>
   )
 }
 
-function SecondarySwatchGrid() {
+function SecondaryGrid({ colors, hues, tiers }: { colors: SecondaryColor[]; hues: string[]; tiers: string[] }) {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', background: 'var(--border)' }}>
-      {SEC_HUES.map(hue => (
-        <div key={hue} style={{
-          fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'var(--color-text-tertiary)',
-          textAlign: 'center', padding: '8px 0', background: 'var(--background)',
-          letterSpacing: '0.06em', textTransform: 'uppercase',
-        }}>
-          {hue}
-        </div>
+    <div style={{ display: 'grid', gridTemplateColumns: `repeat(${hues.length}, 1fr)`, gap: '1px', background: '#d4e8da' }}>
+      {hues.map(h => (
+        <div key={h} style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', textAlign: 'center', padding: '6px 0', background: '#fff', color: '#a5aab6', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{h}</div>
       ))}
-      {SEC_TIERS.map(tier =>
-        SEC_HUES.map(hue => {
-          const swatch = SECONDARY_PALETTE.find(s => s.hue === hue && s.tier === tier)
-          if (!swatch) return <div key={hue + tier} />
-          return (
-            <div
-              key={hue + tier}
-              title={swatch.hex}
-              onClick={() => navigator.clipboard.writeText(swatch.hex)}
-              style={{ aspectRatio: '1', background: swatch.hex, position: 'relative', cursor: 'pointer' }}
-            >
-              <span style={{
-                position: 'absolute', bottom: '4px', left: '4px',
-                fontFamily: "'DM Mono', monospace", fontSize: '9px',
-                color: isLight(swatch.hex) ? 'rgba(0,0,0,0.4)' : 'rgba(255,255,255,0.5)',
-                letterSpacing: '0.02em',
-              }}>
-                {tier}
-              </span>
-            </div>
-          )
-        })
-      )}
-    </div>
-  )
-}
-
-function TypeScaleRow({ name, family, size, weight, tracking, lh, usage }: typeof TYPE_SCALE[0]) {
-  return (
-    <div style={{
-      display: 'grid', gridTemplateColumns: '140px 1fr 200px', gap: '24px',
-      alignItems: 'baseline', padding: '20px 0', borderBottom: '1px solid var(--border)',
-    }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-          {name}
-        </span>
-        <span style={{
-          fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'var(--color-text-tertiary)',
-          letterSpacing: '0.04em',
-        }}>
-          {size} / {weight}
-        </span>
-      </div>
-      <div style={{
-        fontFamily: family, fontSize: size, fontWeight: weight,
-        letterSpacing: tracking, lineHeight: lh, color: 'var(--color-text-primary)',
-        overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-      }}>
-        The quick brown fox
-      </div>
-      <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)' }}>
-        {usage}
-      </div>
-    </div>
-  )
-}
-
-function FontCard({ name, role, specimen, family, weights, note }: typeof FONTS[0]) {
-  return (
-    <div style={{ border: '1px solid var(--border)', padding: '32px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-        <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}>{name}</div>
-        <div style={{
-          fontFamily: "'DM Mono', monospace", fontSize: '11px', color: 'var(--color-text-secondary)',
-          letterSpacing: '0.04em',
-        }}>
-          {role}
-        </div>
-      </div>
-      <div style={{
-        fontFamily: family, fontSize: '28px', fontWeight: 400,
-        lineHeight: 1.2, color: 'var(--color-text-primary)',
-      }}>
-        {specimen}
-      </div>
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-        {weights.map(w => (
-          <div key={w} style={{
-            fontFamily: family, fontSize: '13px', fontWeight: w,
-            color: 'var(--color-text-primary)', padding: '4px 12px',
-            border: '1px solid var(--border)', background: 'var(--secondary)',
-          }}>
-            {w}
+      {tiers.map(tier => hues.map(hue => {
+        const s = colors.find(c => c.hue === hue && c.tier === tier)
+        if (!s) return <div key={hue + tier} style={{ background: '#fff', aspectRatio: '1' }} />
+        return (
+          <div key={hue + tier} title={s.hex} onClick={() => navigator.clipboard.writeText(s.hex)}
+            style={{ aspectRatio: '1', background: s.hex, cursor: 'pointer', position: 'relative' }}>
+            <span style={{ position: 'absolute', bottom: '3px', left: '3px', fontFamily: "'DM Mono', monospace", fontSize: '8px', color: isLight(s.hex) ? 'rgba(0,0,0,0.35)' : 'rgba(255,255,255,0.45)' }}>{tier}</span>
           </div>
-        ))}
-      </div>
-      <div style={{ fontSize: '12px', color: 'var(--color-text-secondary)', lineHeight: 1.5 }}>
-        {note}
-      </div>
+        )
+      }))}
     </div>
   )
 }
 
-const NAV_SECTIONS = ['Colors', 'Typography', 'Fonts']
+// ─── Logo Wordmark (text-based stand-in) ──────────────────────────────────
 
-// ─── App ──────────────────────────────────────────────────────────────────
+function LogoWordmark({ fill, size = 24 }: { fill: string; size?: number }) {
+  return (
+    <span style={{
+      fontFamily: "'DM Sans', sans-serif", fontWeight: 700, fontSize: size,
+      color: fill, letterSpacing: '-0.04em', lineHeight: 1,
+    }}>
+      airops
+    </span>
+  )
+}
 
-export default function App() {
-  const [activeSection, setActiveSection] = useState('Colors')
+// ─── Empty State ──────────────────────────────────────────────────────────
 
-  const scrollTo = (id: string) => {
-    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
-    setActiveSection(id)
+interface EmptyStateProps { onLoad: (brand: BrandData) => void }
+
+function EmptyState({ onLoad }: EmptyStateProps) {
+  const [form, setForm] = useState({ name: '', url: '', primaryColor: '#000000', accentColor: '#cccccc', bgColor: '#ffffff', about: '', voiceAndTone: '', sansFont: '', serifFont: '', monoFont: '' })
+  const [mode, setMode] = useState<'form' | 'json'>('form')
+  const [jsonText, setJsonText] = useState('')
+  const [jsonError, setJsonError] = useState('')
+
+  function set(k: string, v: string) { setForm(f => ({ ...f, [k]: v })) }
+
+  function buildBrand(): BrandData {
+    return {
+      name: form.name || 'My Brand',
+      url: form.url || undefined,
+      primaryColor: form.primaryColor,
+      about: form.about ? form.about.split('\n\n').filter(Boolean) : [],
+      voiceAndTone: form.voiceAndTone,
+      authorPersona: '',
+      writingRules: [],
+      colors: {
+        brand: [
+          { name: 'Primary',    hex: form.primaryColor, usage: 'Primary color' },
+          { name: 'Accent',     hex: form.accentColor,  usage: 'Accent color' },
+          { name: 'Background', hex: form.bgColor,       usage: 'Background' },
+        ],
+        text: [],
+        secondary: [],
+        secHues: [],
+        secTiers: [],
+      },
+      fonts: {
+        sans:  { name: form.sansFont  || 'Sans',  fallback: form.sansFont  ? `'${form.sansFont}', sans-serif`  : 'sans-serif'  },
+        serif: { name: form.serifFont || 'Serif', fallback: form.serifFont ? `'${form.serifFont}', serif`       : 'serif'       },
+        mono:  { name: form.monoFont  || 'Mono',  fallback: form.monoFont  ? `'${form.monoFont}', monospace`   : 'monospace'   },
+      },
+      typeScale: [],
+      logoVariants: [
+        { id: 'light', label: 'On Light', bg: form.bgColor, logoFill: form.primaryColor, labelColor: '#a5aab6', border: true },
+        { id: 'dark',  label: 'On Dark',  bg: form.primaryColor, logoFill: form.bgColor, labelColor: 'rgba(255,255,255,0.4)' },
+      ],
+      logoRules: [],
+      logoSizes: [],
+      dataViz: { palette: [], typography: [] },
+      slideDesign: { ruleGroups: [], fontFallbacks: [] },
+    }
+  }
+
+  function handleJson() {
+    try {
+      const parsed = JSON.parse(jsonText) as BrandData
+      setJsonError('')
+      onLoad(parsed)
+    } catch {
+      setJsonError('Invalid JSON — check your format and try again.')
+    }
+  }
+
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '10px 12px', border: '1px solid #d4e8da',
+    background: '#fff', fontSize: '13px', color: '#000d05',
+    fontFamily: "'DM Sans', sans-serif", outline: 'none', boxSizing: 'border-box',
+  }
+
+  const label: React.CSSProperties = {
+    fontFamily: "'DM Mono', monospace", fontSize: '10px', fontWeight: 500,
+    letterSpacing: '0.08em', textTransform: 'uppercase', color: '#676c79',
+    display: 'block', marginBottom: '6px',
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--background)' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fffb', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <header style={{
-        position: 'sticky', top: 0, zIndex: 50,
-        borderBottom: '1px solid var(--border)', background: 'var(--background)',
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '0 48px', height: '56px',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <div style={{
-            width: '24px', height: '24px', background: '#008c44',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <div style={{ width: '10px', height: '10px', background: '#00ff64' }} />
-          </div>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--color-text-primary)' }}>
-            BrandBuddy
-          </span>
-          <span style={{
-            fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'var(--color-text-tertiary)',
-            letterSpacing: '0.06em', textTransform: 'uppercase',
-          }}>
-            Visual Foundations
-          </span>
+      <header style={{ padding: '20px 48px', borderBottom: '1px solid #d4e8da', background: '#fff', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ width: '24px', height: '24px', background: '#008c44', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '10px', height: '10px', background: '#00ff64' }} />
         </div>
-        <nav style={{ display: 'flex', gap: '4px' }}>
-          {NAV_SECTIONS.map(s => (
-            <button
-              key={s}
-              onClick={() => scrollTo(s)}
-              style={{
-                padding: '6px 14px', fontSize: '13px',
-                fontWeight: activeSection === s ? 600 : 400,
-                color: activeSection === s ? '#008c44' : 'var(--color-text-secondary)',
-                background: activeSection === s ? '#f8fffb' : 'none',
-                border: 'none', cursor: 'pointer',
-                fontFamily: "'DM Sans', sans-serif",
-              }}
-            >
-              {s}
-            </button>
-          ))}
-        </nav>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: '#000d05' }}>BrandBuddy</span>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#a5aab6', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Visual Foundations</span>
       </header>
 
       {/* Hero */}
-      <div style={{ padding: '80px 48px 64px', borderBottom: '1px solid var(--border)', background: '#002910' }}>
-        <div style={{
-          fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#CCFFE0',
-          letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px',
-        }}>
-          AirOps — Brand System
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 48px' }}>
+        <div style={{ width: '100%', maxWidth: '640px' }}>
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#a5aab6', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>
+            Load a brand to explore
+          </div>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '48px', fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1.05, margin: '0 0 12px', color: '#000d05' }}>
+            Visual Foundations
+          </h1>
+          <p style={{ fontSize: '14px', color: '#676c79', margin: '0 0 40px', lineHeight: 1.6 }}>
+            Explore colors, typography, logo usage, writing rules, data viz, and slide design — for any brand.
+          </p>
+
+          {/* Mode tabs */}
+          <div style={{ display: 'flex', gap: '0', marginBottom: '24px', border: '1px solid #d4e8da' }}>
+            {(['form', 'json'] as const).map(m => (
+              <button key={m} onClick={() => setMode(m)} style={{
+                flex: 1, padding: '10px', border: 'none', cursor: 'pointer',
+                background: mode === m ? '#000d05' : '#fff',
+                color: mode === m ? '#fff' : '#676c79',
+                fontFamily: "'DM Mono', monospace", fontSize: '11px',
+                fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase',
+              }}>
+                {m === 'form' ? 'Fill in brand' : 'Paste JSON'}
+              </button>
+            ))}
+          </div>
+
+          {mode === 'form' ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={label}>Brand Name *</label>
+                  <input style={inp} placeholder="e.g. Acme Corp" value={form.name} onChange={e => set('name', e.target.value)} />
+                </div>
+                <div>
+                  <label style={label}>Brand URL</label>
+                  <input style={inp} placeholder="acme.com" value={form.url} onChange={e => set('url', e.target.value)} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={label}>Primary Color</label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input type="color" value={form.primaryColor} onChange={e => set('primaryColor', e.target.value)}
+                      style={{ width: '40px', height: '38px', border: '1px solid #d4e8da', cursor: 'pointer', padding: '2px' }} />
+                    <input style={{ ...inp, flex: 1 }} value={form.primaryColor} onChange={e => set('primaryColor', e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <label style={label}>Accent Color</label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input type="color" value={form.accentColor} onChange={e => set('accentColor', e.target.value)}
+                      style={{ width: '40px', height: '38px', border: '1px solid #d4e8da', cursor: 'pointer', padding: '2px' }} />
+                    <input style={{ ...inp, flex: 1 }} value={form.accentColor} onChange={e => set('accentColor', e.target.value)} />
+                  </div>
+                </div>
+                <div>
+                  <label style={label}>Background</label>
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input type="color" value={form.bgColor} onChange={e => set('bgColor', e.target.value)}
+                      style={{ width: '40px', height: '38px', border: '1px solid #d4e8da', cursor: 'pointer', padding: '2px' }} />
+                    <input style={{ ...inp, flex: 1 }} value={form.bgColor} onChange={e => set('bgColor', e.target.value)} />
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={label}>Sans Font</label>
+                  <input style={inp} placeholder="Inter" value={form.sansFont} onChange={e => set('sansFont', e.target.value)} />
+                </div>
+                <div>
+                  <label style={label}>Serif Font</label>
+                  <input style={inp} placeholder="Playfair Display" value={form.serifFont} onChange={e => set('serifFont', e.target.value)} />
+                </div>
+                <div>
+                  <label style={label}>Mono Font</label>
+                  <input style={inp} placeholder="JetBrains Mono" value={form.monoFont} onChange={e => set('monoFont', e.target.value)} />
+                </div>
+              </div>
+              <div>
+                <label style={label}>About the brand <span style={{ color: '#a5aab6' }}>(separate paragraphs with a blank line)</span></label>
+                <textarea style={{ ...inp, height: '100px', resize: 'vertical' }} placeholder="What does your brand do?" value={form.about} onChange={e => set('about', e.target.value)} />
+              </div>
+              <div>
+                <label style={label}>Voice & Tone</label>
+                <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} placeholder="How does your brand sound?" value={form.voiceAndTone} onChange={e => set('voiceAndTone', e.target.value)} />
+              </div>
+              <button onClick={() => onLoad(buildBrand())} style={{
+                padding: '12px 24px', background: '#000d05', color: '#fff', border: 'none', cursor: 'pointer',
+                fontSize: '13px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", letterSpacing: '0',
+              }}>
+                Load Brand →
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <textarea style={{ ...inp, height: '240px', resize: 'vertical', fontFamily: "'DM Mono', monospace", fontSize: '11px' }}
+                placeholder={'{\n  "name": "Acme Corp",\n  "primaryColor": "#0050ff",\n  "about": ["..."],\n  ...\n}'}
+                value={jsonText} onChange={e => setJsonText(e.target.value)} />
+              {jsonError && <div style={{ fontSize: '12px', color: '#dc2626', fontFamily: "'DM Mono', monospace" }}>{jsonError}</div>}
+              <button onClick={handleJson} style={{ padding: '12px 24px', background: '#000d05', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>
+                Load from JSON →
+              </button>
+            </div>
+          )}
+
+          <div style={{ marginTop: '32px', paddingTop: '32px', borderTop: '1px solid #d4e8da' }}>
+            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#a5aab6', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '12px' }}>
+              Or try a demo
+            </div>
+            <button onClick={() => onLoad(AIROPS_BRAND)} style={{
+              padding: '10px 20px', background: '#008c44', color: '#fff', border: 'none', cursor: 'pointer',
+              fontSize: '13px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
+            }}>
+              Load AirOps Brand →
+            </button>
+          </div>
         </div>
-        <h1 style={{
-          fontFamily: 'Georgia, serif', fontSize: '56px', fontWeight: 400,
-          letterSpacing: '-0.02em', lineHeight: 1.05, margin: '0 0 20px',
-          color: '#ffffff', maxWidth: '640px',
+      </div>
+    </div>
+  )
+}
+
+// ─── Foundations View ─────────────────────────────────────────────────────
+
+const NAV = [
+  { id: 'brand',    label: 'Brand' },
+  { id: 'writing',  label: 'Writing' },
+  { id: 'logo',     label: 'Logo' },
+  { id: 'fonts',    label: 'Fonts' },
+  { id: 'colors',   label: 'Colors' },
+  { id: 'dataviz',  label: 'Data Viz' },
+  { id: 'slides',   label: 'Slides' },
+]
+
+interface FoundationsViewProps { brand: BrandData; onClear: () => void }
+
+function FoundationsView({ brand, onClear }: FoundationsViewProps) {
+  const [active, setActive] = useState('brand')
+
+  function go(id: string) {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    setActive(id)
+  }
+
+  const ff = (role: 'serif' | 'sans' | 'mono') => fontFamily(brand, role)
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#fff' }}>
+      {/* Sticky Header */}
+      <header style={{
+        position: 'sticky', top: 0, zIndex: 100, background: '#fff',
+        borderBottom: '1px solid #d4e8da', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between', padding: '0 48px', height: '52px',
+        gap: '24px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+          <div style={{ width: '20px', height: '20px', background: brand.primaryColor, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '8px', height: '8px', background: '#fff', opacity: 0.6 }} />
+          </div>
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#000d05' }}>BrandBuddy</span>
+          <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#a5aab6', letterSpacing: '0.06em', textTransform: 'uppercase' }}>{brand.name}</span>
+        </div>
+        <nav style={{ display: 'flex', gap: '2px', flex: 1, justifyContent: 'center' }}>
+          {NAV.map(n => (
+            <button key={n.id} onClick={() => go(n.id)} style={{
+              padding: '5px 12px', border: 'none', cursor: 'pointer', fontSize: '12px',
+              fontWeight: active === n.id ? 600 : 400,
+              color: active === n.id ? brand.primaryColor : '#676c79',
+              background: active === n.id ? '#f8fffb' : 'none',
+              fontFamily: "'DM Sans', sans-serif",
+            }}>{n.label}</button>
+          ))}
+        </nav>
+        <button onClick={onClear} style={{
+          display: 'flex', alignItems: 'center', gap: '6px', padding: '6px 12px',
+          border: '1px solid #d4e8da', background: 'none', cursor: 'pointer',
+          fontSize: '12px', color: '#676c79', fontFamily: "'DM Sans', sans-serif",
+          flexShrink: 0,
         }}>
-          Visual Foundations
-        </h1>
-        <p style={{ fontSize: '16px', color: '#dfeae3', lineHeight: 1.6, margin: 0, maxWidth: '480px' }}>
-          Color palettes, typography scales, and font families that define the AirOps brand.
-        </p>
+          <X size={12} /> Change brand
+        </button>
+      </header>
+
+      {/* Hero */}
+      <div style={{ padding: '72px 48px 56px', background: '#002910', borderBottom: '1px solid #1e2e24' }}>
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          <Tag color="#003d20">{brand.url ?? 'brandbuddy.app'}</Tag>
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '64px', fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1.0, margin: '16px 0 0', color: '#fff', maxWidth: '700px' }}>
+            {brand.name}
+          </h1>
+          <p style={{ fontSize: '14px', color: '#dfeae3', margin: '16px 0 0', lineHeight: 1.6, maxWidth: '520px' }}>
+            Visual foundations — colors, typography, logo, writing, data viz, and slide design.
+          </p>
+        </div>
       </div>
 
-      {/* Content */}
-      <main style={{ padding: '64px 48px', maxWidth: '1200px', margin: '0 auto' }}>
+      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '64px 48px' }}>
 
-        {/* Colors */}
-        <section id="Colors" style={{ marginBottom: '64px' }}>
-          <SectionLabel>01 — Colors</SectionLabel>
-          <h2 style={{
-            fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 400,
-            letterSpacing: '-0.02em', margin: '0 0 8px', color: 'var(--color-text-primary)',
-          }}>
-            Brand Palette
-          </h2>
-          <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: '0 0 32px' }}>
-            Core colors across all AirOps surfaces. Click any hex to copy.
-          </p>
+        {/* ── 01 Brand Identity ─────────────────────────────────────────── */}
+        <section id="brand" style={{ marginBottom: '80px' }}>
+          <SectionLabel index="01">Brand Identity</SectionLabel>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '48px' }}>
-            {BRAND_COLORS.slice(0, 4).map(c => <ColorSwatch key={c.hex} {...c} />)}
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
-            {BRAND_COLORS.slice(4).map(c => <ColorSwatch key={c.hex} {...c} />)}
-          </div>
+          {brand.about.length > 0 && (
+            <>
+              <SectionHeading>About {brand.name}</SectionHeading>
+              <div style={{ marginBottom: '48px' }}>
+                {brand.about.map((p, i) => (
+                  <p key={i} style={{ fontSize: '15px', color: '#000d05', lineHeight: 1.75, margin: '0 0 16px', maxWidth: '720px' }}>{p}</p>
+                ))}
+              </div>
+            </>
+          )}
 
-          <Divider />
-          <SectionLabel>Text Colors</SectionLabel>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px' }}>
-            {TEXT_COLORS.map(c => <ColorSwatch key={c.hex} {...c} />)}
-          </div>
+          {brand.voiceAndTone && (
+            <>
+              <SubLabel>Brand voice & tone</SubLabel>
+              <div style={{ background: '#f8fffb', border: '1px solid #d4e8da', padding: '28px 32px', maxWidth: '720px' }}>
+                <p style={{ fontSize: '14px', color: '#000d05', lineHeight: 1.75, margin: 0 }}>{brand.voiceAndTone}</p>
+              </div>
+            </>
+          )}
 
-          <Divider />
-          <SectionLabel>Secondary Palette — 7 Hues × 4 Tiers</SectionLabel>
-          <p style={{ fontSize: '13px', color: 'var(--color-text-secondary)', margin: '0 0 24px' }}>
-            Extended palette for data visualization, tags, and content categories. Click a swatch to copy.
-          </p>
-          <SecondarySwatchGrid />
+          {brand.authorPersona && (
+            <>
+              <SubLabel>Author persona</SubLabel>
+              <div style={{ background: '#f8fffb', border: '1px solid #d4e8da', padding: '28px 32px', maxWidth: '720px' }}>
+                <p style={{ fontSize: '14px', color: '#000d05', lineHeight: 1.75, margin: 0, fontStyle: 'italic' }}>{brand.authorPersona}</p>
+              </div>
+            </>
+          )}
+
+          {(!brand.about.length && !brand.voiceAndTone && !brand.authorPersona) && (
+            <EmptySection message="No brand identity added yet. Edit your brand to add an about, voice, and persona." />
+          )}
         </section>
 
         <Divider />
 
-        {/* Typography */}
-        <section id="Typography" style={{ marginBottom: '64px' }}>
-          <SectionLabel>02 — Typography</SectionLabel>
-          <h2 style={{
-            fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 400,
-            letterSpacing: '-0.02em', margin: '0 0 8px', color: 'var(--color-text-primary)',
-          }}>
-            Type Scale
-          </h2>
-          <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: '0 0 32px' }}>
-            Six levels from Display down to Label, covering every use case in the system.
+        {/* ── 02 Writing Rules ──────────────────────────────────────────── */}
+        <section id="writing" style={{ marginBottom: '80px' }}>
+          <SectionLabel index="02">Writing Rules</SectionLabel>
+          <SectionHeading>Global writing rules</SectionHeading>
+          <p style={{ fontSize: '14px', color: '#676c79', margin: '0 0 32px', lineHeight: 1.6 }}>
+            Rules that apply to every piece of content, regardless of format or channel.
           </p>
-          <div style={{ borderTop: '1px solid var(--border)' }}>
-            {TYPE_SCALE.map(row => <TypeScaleRow key={row.name} {...row} />)}
-          </div>
+
+          {brand.writingRules.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+              {brand.writingRules.map((r, i) => (
+                <div key={r.id} style={{
+                  display: 'grid', gridTemplateColumns: '28px 1fr 80px', gap: '16px',
+                  alignItems: 'baseline', padding: '16px 0',
+                  borderBottom: '1px solid #d4e8da',
+                  background: i % 2 === 0 ? '#fff' : '#fafcfb',
+                }}>
+                  <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#a5aab6', fontWeight: 500 }}>{String(i + 1).padStart(2, '0')}</span>
+                  <span style={{ fontSize: '13px', color: '#000d05', lineHeight: 1.6 }}>{r.rule}</span>
+                  <Tag>{r.appliesTo}</Tag>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptySection message="No writing rules defined. Add global rules to enforce consistent brand voice." />
+          )}
         </section>
 
         <Divider />
 
-        {/* Fonts */}
-        <section id="Fonts">
-          <SectionLabel>03 — Fonts</SectionLabel>
-          <h2 style={{
-            fontFamily: 'Georgia, serif', fontSize: '28px', fontWeight: 400,
-            letterSpacing: '-0.02em', margin: '0 0 8px', color: 'var(--color-text-primary)',
-          }}>
-            Font Families
-          </h2>
-          <p style={{ fontSize: '14px', color: 'var(--color-text-secondary)', margin: '0 0 32px' }}>
-            Three families — sans, serif, and mono — each with a defined role.
-            Production uses Saans, Serrif VF, and Saans Mono (licensed); this build uses Google Fonts equivalents.
+        {/* ── 03 Logo & Lockups ─────────────────────────────────────────── */}
+        <section id="logo" style={{ marginBottom: '80px' }}>
+          <SectionLabel index="03">Logo & Lockups</SectionLabel>
+          <SectionHeading>Logo usage</SectionHeading>
+          <p style={{ fontSize: '14px', color: '#676c79', margin: '0 0 32px', lineHeight: 1.6 }}>
+            Approved background contexts for the {brand.name} mark.
           </p>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: 'var(--border)' }}>
-            {FONTS.map(f => <FontCard key={f.name} {...f} />)}
+
+          {/* Variant grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#d4e8da', marginBottom: '40px' }}>
+            {brand.logoVariants.map(v => (
+              <div key={v.id} style={{
+                background: v.bg, padding: '48px 32px',
+                border: v.border ? '1px solid #d4e8da' : 'none',
+                display: 'flex', flexDirection: 'column', gap: '20px',
+              }}>
+                <LogoWordmark fill={v.logoFill} size={28} />
+                <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: v.labelColor, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  {v.label} {v.token && `· ${v.token}`}
+                </div>
+              </div>
+            ))}
           </div>
+
+          {/* Sizes */}
+          {brand.logoSizes.length > 0 && (
+            <>
+              <SubLabel>Sizes</SubLabel>
+              <div style={{ border: '1px solid #d4e8da', marginBottom: '32px' }}>
+                {brand.logoSizes.map((s, i) => (
+                  <div key={s.id} style={{
+                    display: 'grid', gridTemplateColumns: '80px 180px 1fr', gap: '24px', alignItems: 'center',
+                    padding: '20px 24px', borderBottom: i < brand.logoSizes.length - 1 ? '1px solid #d4e8da' : 'none',
+                    background: i % 2 === 0 ? '#fff' : '#fafcfb',
+                  }}>
+                    <Tag>{s.label}</Tag>
+                    <LogoWordmark fill="#000d05" size={s.width / 5} />
+                    <span style={{ fontSize: '12px', color: '#676c79' }}>{s.usage} · <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px' }}>{s.width}px</span></span>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Do/Don't rules */}
+          {brand.logoRules.length > 0 && (
+            <>
+              <SubLabel>Do / Don't</SubLabel>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1px', background: '#d4e8da' }}>
+                <div style={{ background: '#fff', padding: '24px' }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#008c44', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 600 }}>✓ Do</div>
+                  {brand.logoRules.filter(r => r.type === 'do').map(r => (
+                    <div key={r.id} style={{ display: 'flex', gap: '10px', marginBottom: '12px', fontSize: '13px', color: '#000d05', lineHeight: 1.5 }}>
+                      <span style={{ color: '#008c44', flexShrink: 0, marginTop: '2px' }}>→</span>
+                      {r.rule}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ background: '#fff', padding: '24px' }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#dc2626', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '16px', fontWeight: 600 }}>✕ Don't</div>
+                  {brand.logoRules.filter(r => r.type === 'dont').map(r => (
+                    <div key={r.id} style={{ display: 'flex', gap: '10px', marginBottom: '12px', fontSize: '13px', color: '#000d05', lineHeight: 1.5 }}>
+                      <span style={{ color: '#dc2626', flexShrink: 0, marginTop: '2px' }}>✕</span>
+                      {r.rule}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
+        </section>
+
+        <Divider />
+
+        {/* ── 04 Fonts ──────────────────────────────────────────────────── */}
+        <section id="fonts" style={{ marginBottom: '80px' }}>
+          <SectionLabel index="04">Fonts</SectionLabel>
+          <SectionHeading>Font families</SectionHeading>
+          <p style={{ fontSize: '14px', color: '#676c79', margin: '0 0 32px', lineHeight: 1.6 }}>
+            Three families — sans, serif, mono — each with a defined role.
+          </p>
+
+          {/* Specimen cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1px', background: '#d4e8da', marginBottom: '48px' }}>
+            {(['sans', 'serif', 'mono'] as const).map(role => {
+              const f = brand.fonts[role]
+              return (
+                <div key={role} style={{ background: '#fff', padding: '32px' }}>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#a5aab6', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '8px' }}>{role}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#000d05', marginBottom: '4px' }}>{f.name}</div>
+                  <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#a5aab6', marginBottom: '24px', wordBreak: 'break-all' }}>{f.fallback}</div>
+                  <div style={{ fontFamily: f.fallback, fontSize: '32px', fontWeight: 400, lineHeight: 1.2, color: '#000d05', marginBottom: '16px' }}>
+                    Aa Bb Cc Dd
+                  </div>
+                  <div style={{ fontFamily: f.fallback, fontSize: '14px', color: '#676c79', lineHeight: 1.6 }}>
+                    The quick brown fox jumps over the lazy dog. 0123456789
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Type scale */}
+          {brand.typeScale.length > 0 && (
+            <>
+              <SubLabel>Type scale</SubLabel>
+              <div style={{ borderTop: '1px solid #d4e8da' }}>
+                {brand.typeScale.map(row => (
+                  <div key={row.name} style={{
+                    display: 'grid', gridTemplateColumns: '140px 1fr 160px 140px', gap: '24px',
+                    alignItems: 'baseline', padding: '20px 0', borderBottom: '1px solid #d4e8da',
+                  }}>
+                    <div>
+                      <div style={{ fontSize: '12px', fontWeight: 600, color: '#000d05' }}>{row.name}</div>
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#a5aab6', marginTop: '2px' }}>{row.size} · w{row.weight}</div>
+                    </div>
+                    <div style={{ fontFamily: ff(row.fontRole), fontSize: row.size, fontWeight: row.weight, letterSpacing: row.tracking, lineHeight: row.lh, color: '#000d05', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+                      The quick brown fox
+                    </div>
+                    <Tag>{row.fontRole}</Tag>
+                    <div style={{ fontSize: '11px', color: '#676c79' }}>{row.usage}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </section>
+
+        <Divider />
+
+        {/* ── 05 Colors ─────────────────────────────────────────────────── */}
+        <section id="colors" style={{ marginBottom: '80px' }}>
+          <SectionLabel index="05">Color Palette</SectionLabel>
+          <SectionHeading>Brand colors</SectionHeading>
+          <p style={{ fontSize: '14px', color: '#676c79', margin: '0 0 32px', lineHeight: 1.6 }}>
+            Core colors used across all surfaces. Click any hex to copy.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '24px' }}>
+            {brand.colors.brand.slice(0, 4).map(c => <ColorSwatch key={c.hex} c={c} />)}
+          </div>
+          {brand.colors.brand.length > 4 && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
+              {brand.colors.brand.slice(4).map(c => <ColorSwatch key={c.hex} c={c} />)}
+            </div>
+          )}
+
+          {brand.colors.text.length > 0 && (
+            <>
+              <SubLabel>Text colors</SubLabel>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
+                {brand.colors.text.map(c => <ColorSwatch key={c.hex} c={c} />)}
+              </div>
+            </>
+          )}
+
+          {brand.colors.secondary.length > 0 && (
+            <>
+              <SubLabel>Secondary palette — {brand.colors.secHues.length} hues × {brand.colors.secTiers.length} tiers</SubLabel>
+              <p style={{ fontSize: '12px', color: '#676c79', margin: '0 0 16px' }}>Extended palette for data viz, tags, and content categories. Click to copy hex.</p>
+              <SecondaryGrid colors={brand.colors.secondary} hues={brand.colors.secHues} tiers={brand.colors.secTiers} />
+            </>
+          )}
+        </section>
+
+        <Divider />
+
+        {/* ── 06 Data Viz ───────────────────────────────────────────────── */}
+        <section id="dataviz" style={{ marginBottom: '80px' }}>
+          <SectionLabel index="06">Data Viz</SectionLabel>
+          <SectionHeading>Data visualization</SectionHeading>
+          <p style={{ fontSize: '14px', color: '#676c79', margin: '0 0 32px', lineHeight: 1.6 }}>
+            Palette and typography rules for charts, tables, and data displays.
+          </p>
+
+          {brand.dataViz.palette.length > 0 ? (
+            <>
+              <SubLabel>Chart palette</SubLabel>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', background: '#d4e8da', marginBottom: '40px' }}>
+                {brand.dataViz.palette.map(p => (
+                  <div key={p.hex} style={{ background: '#fff' }}>
+                    <div style={{ aspectRatio: '1', background: p.hex, border: isLight(p.hex) ? '1px solid #d4e8da' : 'none' }} />
+                    <div style={{ padding: '8px' }}>
+                      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#676c79', marginBottom: '2px' }}>{p.hex.toUpperCase()}</div>
+                      <div style={{ fontSize: '10px', color: '#a5aab6', lineHeight: 1.4 }}>{p.label}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <SubLabel>Data viz typography</SubLabel>
+              <div style={{ border: '1px solid #d4e8da' }}>
+                {brand.dataViz.typography.map((t, i) => (
+                  <div key={t.role} style={{
+                    display: 'grid', gridTemplateColumns: '180px 1fr', gap: '24px',
+                    padding: '14px 20px', borderBottom: i < brand.dataViz.typography.length - 1 ? '1px solid #d4e8da' : 'none',
+                    background: i % 2 === 0 ? '#fff' : '#fafcfb',
+                  }}>
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#000d05' }}>{t.role}</span>
+                    <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#676c79' }}>{t.spec}</span>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <EmptySection message="No data viz guidelines defined yet." />
+          )}
+        </section>
+
+        <Divider />
+
+        {/* ── 07 Slide Design ───────────────────────────────────────────── */}
+        <section id="slides" style={{ marginBottom: '80px' }}>
+          <SectionLabel index="07">Slides</SectionLabel>
+          <SectionHeading>Presentation slide design</SectionHeading>
+          <p style={{ fontSize: '14px', color: '#676c79', margin: '0 0 32px', lineHeight: 1.6 }}>
+            Rules for building on-brand presentations and decks.
+          </p>
+
+          {brand.slideDesign.ruleGroups.length > 0 ? (
+            <>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1px', background: '#d4e8da', marginBottom: '40px' }}>
+                {brand.slideDesign.ruleGroups.map(g => (
+                  <div key={g.category} style={{ background: '#fff', padding: '28px' }}>
+                    <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#008c44', marginBottom: '16px' }}>{g.category}</div>
+                    {g.rules.map((r, i) => (
+                      <div key={i} style={{ display: 'flex', gap: '10px', marginBottom: '10px', fontSize: '13px', color: '#000d05', lineHeight: 1.55 }}>
+                        <span style={{ color: '#d4e8da', flexShrink: 0, fontFamily: "'DM Mono', monospace", fontSize: '11px' }}>{String(i + 1).padStart(2, '0')}</span>
+                        {r}
+                      </div>
+                    ))}
+                  </div>
+                ))}
+              </div>
+
+              {brand.slideDesign.fontFallbacks.length > 0 && (
+                <>
+                  <SubLabel>Font fallbacks for slide tools</SubLabel>
+                  <div style={{ border: '1px solid #d4e8da' }}>
+                    {brand.slideDesign.fontFallbacks.map((f, i) => (
+                      <div key={f.brand} style={{
+                        display: 'grid', gridTemplateColumns: '120px 160px 1fr', gap: '24px',
+                        padding: '14px 20px', borderBottom: i < brand.slideDesign.fontFallbacks.length - 1 ? '1px solid #d4e8da' : 'none',
+                        alignItems: 'baseline',
+                      }}>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: '#000d05' }}>{f.brand}</span>
+                        <Tag>{f.role}</Tag>
+                        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#676c79' }}>{f.fallback}</span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <EmptySection message="No slide design rules defined yet." />
+          )}
         </section>
 
       </main>
 
-      <footer style={{
-        borderTop: '1px solid var(--border)', padding: '24px 48px',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      }}>
-        <span style={{
-          fontFamily: "'DM Mono', monospace", fontSize: '11px',
-          color: 'var(--color-text-tertiary)', letterSpacing: '0.04em',
-        }}>
-          BrandBuddy — Visual Foundations
-        </span>
-        <span style={{
-          fontFamily: "'DM Mono', monospace", fontSize: '11px',
-          color: 'var(--color-text-tertiary)', letterSpacing: '0.04em',
-        }}>
-          AirOps Brand System
-        </span>
+      <footer style={{ borderTop: '1px solid #d4e8da', padding: '20px 48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#a5aab6', letterSpacing: '0.04em' }}>BrandBuddy</span>
+        <button onClick={onClear} style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '12px', color: '#a5aab6', fontFamily: "'DM Sans', sans-serif" }}>
+          <Plus size={11} /> Load another brand
+        </button>
       </footer>
     </div>
   )
+}
+
+// ─── Empty Section placeholder ────────────────────────────────────────────
+
+function EmptySection({ message }: { message: string }) {
+  return (
+    <div style={{ border: '1px dashed #d4e8da', padding: '40px', textAlign: 'center' }}>
+      <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#a5aab6', letterSpacing: '0.04em' }}>{message}</div>
+    </div>
+  )
+}
+
+// ─── Root ─────────────────────────────────────────────────────────────────
+
+export default function App() {
+  const [brand, setBrand] = useState<BrandData | null>(null)
+  return brand ? <FoundationsView brand={brand} onClear={() => setBrand(null)} /> : <EmptyState onLoad={setBrand} />
 }
