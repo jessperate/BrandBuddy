@@ -1,0 +1,124 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --font-size: 14px;
+
+  --font-sans:  'DM Sans', 'Helvetica Neue', sans-serif;
+  --font-serif: Georgia, serif;
+  --font-mono:  'DM Mono', monospace;
+
+  --background:          #ffffff;
+  --foreground:          #000d05;
+  --card:                #ffffff;
+  --card-foreground:     #000d05;
+
+  --primary:             #008c44;
+  --primary-foreground:  #ffffff;
+
+  --secondary:           #f8fffb;
+  --secondary-foreground:#676c79;
+
+  --muted:               #dfeae3;
+  --muted-foreground:    #a5aab6;
+
+  --accent:              #00ff64;
+  --accent-foreground:   #000d05;
+
+  --border:              #d4e8da;
+  --input:               #ffffff;
+  --input-background:    #f8fffb;
+  --ring:                #008c44;
+
+  --elevation-sm: 0 1px 4px rgba(0, 13, 5, 0.06);
+
+  --chart-1: #008c44;
+  --chart-2: #00ff64;
+  --chart-3: #CCFFE0;
+  --chart-4: #EEFF8C;
+  --chart-5: #002910;
+
+  --color-near-black:     #000d05;
+  --color-off-white:      #F8FFFA;
+  --color-green-50:       #f8fffb;
+  --color-green-100:      #dfeae3;
+  --color-green-200:      #CCFFE0;
+  --color-green-500:      #008c44;
+  --color-green-600:      #002910;
+  --color-interaction:    #00ff64;
+  --color-accent-label:   #EEFF8C;
+  --color-stroke-green:   #d4e8da;
+  --color-text-primary:   #000d05;
+  --color-text-secondary: #676c79;
+  --color-text-tertiary:  #a5aab6;
+
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  --radius: 0px;
+
+  --font-weight-medium: 600;
+  --font-weight-normal: 400;
+
+  --text-2xl: 32px;
+  --text-xl:  24px;
+  --text-lg:  20px;
+  --text-base:16px;
+  --text-sm:  14px;
+  --text-xs:  12px;
+}
+
+.dark {
+  --background:          #0b0e16;
+  --foreground:          #ffffff;
+  --card:                #111418;
+  --card-foreground:     #ffffff;
+  --primary:             #00ff64;
+  --primary-foreground:  #000d05;
+  --secondary:           #1a2020;
+  --secondary-foreground:#a5aab6;
+  --muted:               #1a2020;
+  --muted-foreground:    #a5aab6;
+  --accent:              #EEFF8C;
+  --accent-foreground:   #000d05;
+  --border:              #1e2e24;
+  --input:               #1a2020;
+  --ring:                #00ff64;
+}
+
+@theme inline {
+  --color-background:   var(--background);
+  --color-foreground:   var(--foreground);
+  --color-primary:      var(--primary);
+  --color-secondary:    var(--secondary);
+  --color-muted:        var(--muted);
+  --color-accent:       var(--accent);
+  --color-border:       var(--border);
+  --color-card:         var(--card);
+  --radius-sm:          0px;
+  --radius-md:          0px;
+  --radius-lg:          0px;
+  --shadow-elevation-sm: var(--elevation-sm);
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: var(--font-size);
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+}
