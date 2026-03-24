@@ -67,7 +67,17 @@ export interface BrandFonts {
   mono: { name: string; fallback: string };
 }
 
+export interface ScanResult {
+  brand: Partial<BrandData>
+  logoUrl?: string
+  logoSvg?: string
+  scannedUrl: string
+  warnings: string[]
+}
+
 export interface BrandData {
+  logoUrl?: string
+  logoSvg?: string
   name: string;
   url?: string;
   primaryColor: string;

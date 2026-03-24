@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Copy, Check, Plus, X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Copy, Check, Plus, X, ArrowRight, AlertCircle } from 'lucide-react'
 import type { BrandData, ColorEntry, SecondaryColor } from './types'
 import { AIROPS_BRAND } from './data/airops'
 
@@ -121,206 +121,255 @@ function LogoWordmark({ fill, size = 24 }: { fill: string; size?: number }) {
   )
 }
 
-// ─── Empty State ──────────────────────────────────────────────────────────
+// ─── URL Scanner Empty State ──────────────────────────────────────────────
+
+const EXAMPLES = ['stripe.com', 'linear.app', 'vercel.com', 'notion.so', 'figma.com', 'loom.com']
+
+const SCAN_STEPS = [
+  'Fetching page…',
+  'Extracting colors…',
+  'Detecting fonts…',
+  'Finding logo…',
+  'Building profile…',
+]
 
 interface EmptyStateProps { onLoad: (brand: BrandData) => void }
 
 function EmptyState({ onLoad }: EmptyStateProps) {
-  const [form, setForm] = useState({ name: '', url: '', primaryColor: '#000000', accentColor: '#cccccc', bgColor: '#ffffff', about: '', voiceAndTone: '', sansFont: '', serifFont: '', monoFont: '' })
-  const [mode, setMode] = useState<'form' | 'json'>('form')
-  const [jsonText, setJsonText] = useState('')
-  const [jsonError, setJsonError] = useState('')
+  const [url, setUrl] = useState('')
+  const [status, setStatus] = useState<'idle' | 'scanning' | 'error'>('idle')
+  const [step, setStep] = useState(0)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [warnings, setWarnings] = useState<string[]>([])
+  const inputRef = useRef<HTMLInputElement>(null)
+  const stepRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  function set(k: string, v: string) { setForm(f => ({ ...f, [k]: v })) }
+  useEffect(() => { inputRef.current?.focus() }, [])
 
-  function buildBrand(): BrandData {
-    return {
-      name: form.name || 'My Brand',
-      url: form.url || undefined,
-      primaryColor: form.primaryColor,
-      about: form.about ? form.about.split('\n\n').filter(Boolean) : [],
-      voiceAndTone: form.voiceAndTone,
-      authorPersona: '',
-      writingRules: [],
-      colors: {
-        brand: [
-          { name: 'Primary',    hex: form.primaryColor, usage: 'Primary color' },
-          { name: 'Accent',     hex: form.accentColor,  usage: 'Accent color' },
-          { name: 'Background', hex: form.bgColor,       usage: 'Background' },
-        ],
-        text: [],
-        secondary: [],
-        secHues: [],
-        secTiers: [],
-      },
-      fonts: {
-        sans:  { name: form.sansFont  || 'Sans',  fallback: form.sansFont  ? `'${form.sansFont}', sans-serif`  : 'sans-serif'  },
-        serif: { name: form.serifFont || 'Serif', fallback: form.serifFont ? `'${form.serifFont}', serif`       : 'serif'       },
-        mono:  { name: form.monoFont  || 'Mono',  fallback: form.monoFont  ? `'${form.monoFont}', monospace`   : 'monospace'   },
-      },
-      typeScale: [],
-      logoVariants: [
-        { id: 'light', label: 'On Light', bg: form.bgColor, logoFill: form.primaryColor, labelColor: '#a5aab6', border: true },
-        { id: 'dark',  label: 'On Dark',  bg: form.primaryColor, logoFill: form.bgColor, labelColor: 'rgba(255,255,255,0.4)' },
-      ],
-      logoRules: [],
-      logoSizes: [],
-      dataViz: { palette: [], typography: [] },
-      slideDesign: { ruleGroups: [], fontFallbacks: [] },
-    }
+  function startStepTimer() {
+    let s = 0
+    setStep(0)
+    stepRef.current = setInterval(() => {
+      s = Math.min(s + 1, SCAN_STEPS.length - 1)
+      setStep(s)
+    }, 900)
   }
 
-  function handleJson() {
+  function stopStepTimer() {
+    if (stepRef.current) clearInterval(stepRef.current)
+  }
+
+  async function scan(rawUrl: string) {
+    const target = rawUrl.trim()
+    if (!target) return
+    setStatus('scanning')
+    setErrorMsg('')
+    setWarnings([])
+    startStepTimer()
+
     try {
-      const parsed = JSON.parse(jsonText) as BrandData
-      setJsonError('')
-      onLoad(parsed)
+      const res = await fetch(`/api/scan?url=${encodeURIComponent(target)}`)
+      const data = await res.json()
+      stopStepTimer()
+
+      if (!res.ok || data.error) {
+        setStatus('error')
+        setErrorMsg(data.error ?? 'Scan failed')
+        return
+      }
+
+      if (data.warnings?.length) setWarnings(data.warnings)
+
+      // Merge scan result into a full BrandData skeleton
+      const brand: BrandData = {
+        name: data.name ?? target,
+        url: data.url ?? target,
+        primaryColor: data.primaryColor ?? '#000000',
+        logoUrl: data.logoUrl ?? undefined,
+        logoSvg: data.logoSvg ?? undefined,
+        about: data.about ?? [],
+        voiceAndTone: data.voiceAndTone ?? '',
+        authorPersona: '',
+        writingRules: [],
+        colors: {
+          brand: data.colors?.brand ?? [],
+          text: data.colors?.text ?? [],
+          secondary: [],
+          secHues: [],
+          secTiers: [],
+        },
+        fonts: data.fonts ?? {
+          sans:  { name: 'System Sans',  fallback: 'sans-serif'  },
+          serif: { name: 'System Serif', fallback: 'serif'       },
+          mono:  { name: 'System Mono',  fallback: 'monospace'   },
+        },
+        typeScale: [],
+        logoVariants: data.logoUrl
+          ? [
+              { id: 'light', label: 'On White', bg: '#ffffff', logoFill: data.primaryColor, labelColor: '#a5aab6', border: true },
+              { id: 'dark',  label: 'On Dark',  bg: data.primaryColor, logoFill: '#ffffff', labelColor: 'rgba(255,255,255,0.4)' },
+            ]
+          : [],
+        logoRules: [],
+        logoSizes: [],
+        dataViz: { palette: [], typography: [] },
+        slideDesign: { ruleGroups: [], fontFallbacks: [] },
+      }
+
+      setStatus('idle')
+      if (data.warnings?.length) {
+        // small pause so user sees warnings before transition
+        setTimeout(() => onLoad(brand), 1200)
+      } else {
+        onLoad(brand)
+      }
     } catch {
-      setJsonError('Invalid JSON — check your format and try again.')
+      stopStepTimer()
+      setStatus('error')
+      setErrorMsg('Network error — check your connection and try again.')
     }
   }
 
-  const inp: React.CSSProperties = {
-    width: '100%', padding: '10px 12px', border: '1px solid #d4e8da',
-    background: '#fff', fontSize: '13px', color: '#000d05',
-    fontFamily: "'DM Sans', sans-serif", outline: 'none', boxSizing: 'border-box',
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    scan(url)
   }
 
-  const label: React.CSSProperties = {
-    fontFamily: "'DM Mono', monospace", fontSize: '10px', fontWeight: 500,
-    letterSpacing: '0.08em', textTransform: 'uppercase', color: '#676c79',
-    display: 'block', marginBottom: '6px',
-  }
+  const isScanning = status === 'scanning'
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f8fffb', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <header style={{ padding: '20px 48px', borderBottom: '1px solid #d4e8da', background: '#fff', display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <div style={{ width: '24px', height: '24px', background: '#008c44', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <div style={{ width: '10px', height: '10px', background: '#00ff64' }} />
+      <header style={{ padding: '0 48px', height: '52px', borderBottom: '1px solid #d4e8da', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ width: '20px', height: '20px', background: '#008c44', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div style={{ width: '8px', height: '8px', background: '#00ff64' }} />
         </div>
-        <span style={{ fontSize: '14px', fontWeight: 600, color: '#000d05' }}>BrandBuddy</span>
-        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#a5aab6', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Visual Foundations</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: '#000d05' }}>BrandBuddy</span>
+        <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#a5aab6', letterSpacing: '0.06em', textTransform: 'uppercase' }}>Visual Foundations</span>
       </header>
 
-      {/* Hero */}
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '80px 48px' }}>
-        <div style={{ width: '100%', maxWidth: '640px' }}>
-          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#a5aab6', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '16px' }}>
-            Load a brand to explore
+      {/* Main */}
+      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 48px' }}>
+        <div style={{ width: '100%', maxWidth: '560px' }}>
+
+          {/* Title */}
+          <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#a5aab6', letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '14px' }}>
+            Enter any brand URL
           </div>
-          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '48px', fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1.05, margin: '0 0 12px', color: '#000d05' }}>
-            Visual Foundations
+          <h1 style={{ fontFamily: 'Georgia, serif', fontSize: '44px', fontWeight: 400, letterSpacing: '-0.02em', lineHeight: 1.05, margin: '0 0 10px', color: '#000d05' }}>
+            Scan a brand
           </h1>
-          <p style={{ fontSize: '14px', color: '#676c79', margin: '0 0 40px', lineHeight: 1.6 }}>
-            Explore colors, typography, logo usage, writing rules, data viz, and slide design — for any brand.
+          <p style={{ fontSize: '14px', color: '#676c79', margin: '0 0 36px', lineHeight: 1.6 }}>
+            BrandBuddy scans the site for colors, fonts, logo, and description, then builds a visual foundations view.
           </p>
 
-          {/* Mode tabs */}
-          <div style={{ display: 'flex', gap: '0', marginBottom: '24px', border: '1px solid #d4e8da' }}>
-            {(['form', 'json'] as const).map(m => (
-              <button key={m} onClick={() => setMode(m)} style={{
-                flex: 1, padding: '10px', border: 'none', cursor: 'pointer',
-                background: mode === m ? '#000d05' : '#fff',
-                color: mode === m ? '#fff' : '#676c79',
-                fontFamily: "'DM Mono', monospace", fontSize: '11px',
-                fontWeight: 500, letterSpacing: '0.06em', textTransform: 'uppercase',
-              }}>
-                {m === 'form' ? 'Fill in brand' : 'Paste JSON'}
-              </button>
-            ))}
-          </div>
-
-          {mode === 'form' ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={label}>Brand Name *</label>
-                  <input style={inp} placeholder="e.g. Acme Corp" value={form.name} onChange={e => set('name', e.target.value)} />
-                </div>
-                <div>
-                  <label style={label}>Brand URL</label>
-                  <input style={inp} placeholder="acme.com" value={form.url} onChange={e => set('url', e.target.value)} />
-                </div>
+          {/* URL input */}
+          <form onSubmit={onSubmit}>
+            <div style={{ display: 'flex', border: '1px solid #000d05', overflow: 'hidden', marginBottom: '16px' }}>
+              <div style={{ padding: '0 14px', display: 'flex', alignItems: 'center', background: '#f8fffb', borderRight: '1px solid #d4e8da', flexShrink: 0 }}>
+                <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#a5aab6' }}>https://</span>
               </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={label}>Primary Color</label>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <input type="color" value={form.primaryColor} onChange={e => set('primaryColor', e.target.value)}
-                      style={{ width: '40px', height: '38px', border: '1px solid #d4e8da', cursor: 'pointer', padding: '2px' }} />
-                    <input style={{ ...inp, flex: 1 }} value={form.primaryColor} onChange={e => set('primaryColor', e.target.value)} />
-                  </div>
-                </div>
-                <div>
-                  <label style={label}>Accent Color</label>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <input type="color" value={form.accentColor} onChange={e => set('accentColor', e.target.value)}
-                      style={{ width: '40px', height: '38px', border: '1px solid #d4e8da', cursor: 'pointer', padding: '2px' }} />
-                    <input style={{ ...inp, flex: 1 }} value={form.accentColor} onChange={e => set('accentColor', e.target.value)} />
-                  </div>
-                </div>
-                <div>
-                  <label style={label}>Background</label>
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <input type="color" value={form.bgColor} onChange={e => set('bgColor', e.target.value)}
-                      style={{ width: '40px', height: '38px', border: '1px solid #d4e8da', cursor: 'pointer', padding: '2px' }} />
-                    <input style={{ ...inp, flex: 1 }} value={form.bgColor} onChange={e => set('bgColor', e.target.value)} />
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={label}>Sans Font</label>
-                  <input style={inp} placeholder="Inter" value={form.sansFont} onChange={e => set('sansFont', e.target.value)} />
-                </div>
-                <div>
-                  <label style={label}>Serif Font</label>
-                  <input style={inp} placeholder="Playfair Display" value={form.serifFont} onChange={e => set('serifFont', e.target.value)} />
-                </div>
-                <div>
-                  <label style={label}>Mono Font</label>
-                  <input style={inp} placeholder="JetBrains Mono" value={form.monoFont} onChange={e => set('monoFont', e.target.value)} />
-                </div>
-              </div>
-              <div>
-                <label style={label}>About the brand <span style={{ color: '#a5aab6' }}>(separate paragraphs with a blank line)</span></label>
-                <textarea style={{ ...inp, height: '100px', resize: 'vertical' }} placeholder="What does your brand do?" value={form.about} onChange={e => set('about', e.target.value)} />
-              </div>
-              <div>
-                <label style={label}>Voice & Tone</label>
-                <textarea style={{ ...inp, height: '80px', resize: 'vertical' }} placeholder="How does your brand sound?" value={form.voiceAndTone} onChange={e => set('voiceAndTone', e.target.value)} />
-              </div>
-              <button onClick={() => onLoad(buildBrand())} style={{
-                padding: '12px 24px', background: '#000d05', color: '#fff', border: 'none', cursor: 'pointer',
-                fontSize: '13px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif", letterSpacing: '0',
-              }}>
-                Load Brand →
+              <input
+                ref={inputRef}
+                value={url}
+                onChange={e => setUrl(e.target.value)}
+                placeholder="stripe.com"
+                disabled={isScanning}
+                style={{
+                  flex: 1, padding: '14px 16px', border: 'none', outline: 'none',
+                  fontSize: '16px', color: '#000d05', fontFamily: "'DM Sans', sans-serif",
+                  background: '#fff',
+                }}
+              />
+              <button
+                type="submit"
+                disabled={isScanning || !url.trim()}
+                style={{
+                  padding: '0 24px', background: '#000d05', color: '#fff', border: 'none',
+                  cursor: isScanning || !url.trim() ? 'not-allowed' : 'pointer',
+                  opacity: !url.trim() ? 0.4 : 1,
+                  fontFamily: "'DM Sans', sans-serif", fontSize: '13px', fontWeight: 600,
+                  display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0,
+                  transition: 'opacity 0.15s',
+                }}
+              >
+                {isScanning ? 'Scanning' : 'Scan'} <ArrowRight size={14} />
               </button>
             </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <textarea style={{ ...inp, height: '240px', resize: 'vertical', fontFamily: "'DM Mono', monospace", fontSize: '11px' }}
-                placeholder={'{\n  "name": "Acme Corp",\n  "primaryColor": "#0050ff",\n  "about": ["..."],\n  ...\n}'}
-                value={jsonText} onChange={e => setJsonText(e.target.value)} />
-              {jsonError && <div style={{ fontSize: '12px', color: '#dc2626', fontFamily: "'DM Mono', monospace" }}>{jsonError}</div>}
-              <button onClick={handleJson} style={{ padding: '12px 24px', background: '#000d05', color: '#fff', border: 'none', cursor: 'pointer', fontSize: '13px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif" }}>
-                Load from JSON →
-              </button>
+          </form>
+
+          {/* Step progress */}
+          {isScanning && (
+            <div style={{ border: '1px solid #d4e8da', padding: '20px 24px', background: '#f8fffb', marginBottom: '16px' }}>
+              {SCAN_STEPS.map((s, i) => (
+                <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '5px 0' }}>
+                  <div style={{
+                    width: '6px', height: '6px', flexShrink: 0,
+                    background: i < step ? '#008c44' : i === step ? '#00ff64' : '#d4e8da',
+                    transition: 'background 0.3s',
+                  }} />
+                  <span style={{
+                    fontFamily: "'DM Mono', monospace", fontSize: '11px', letterSpacing: '0.04em',
+                    color: i <= step ? '#000d05' : '#a5aab6',
+                    transition: 'color 0.3s',
+                  }}>{s}</span>
+                </div>
+              ))}
             </div>
           )}
 
-          <div style={{ marginTop: '32px', paddingTop: '32px', borderTop: '1px solid #d4e8da' }}>
-            <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: '#a5aab6', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '12px' }}>
-              Or try a demo
+          {/* Warnings */}
+          {warnings.length > 0 && status !== 'scanning' && (
+            <div style={{ border: '1px solid #EEFF8C', background: '#fffdf0', padding: '14px 16px', marginBottom: '16px' }}>
+              {warnings.map((w, i) => (
+                <div key={i} style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '12px', color: '#676c79', lineHeight: 1.5 }}>
+                  <AlertCircle size={12} style={{ marginTop: '2px', flexShrink: 0, color: '#888840' }} />
+                  {w}
+                </div>
+              ))}
             </div>
-            <button onClick={() => onLoad(AIROPS_BRAND)} style={{
-              padding: '10px 20px', background: '#008c44', color: '#fff', border: 'none', cursor: 'pointer',
-              fontSize: '13px', fontWeight: 600, fontFamily: "'DM Sans', sans-serif",
-            }}>
-              Load AirOps Brand →
-            </button>
+          )}
+
+          {/* Error */}
+          {status === 'error' && (
+            <div style={{ border: '1px solid #fca5a5', background: '#fff5f5', padding: '14px 16px', marginBottom: '16px', display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+              <AlertCircle size={14} style={{ color: '#dc2626', flexShrink: 0, marginTop: '1px' }} />
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 600, color: '#dc2626', marginBottom: '2px' }}>Scan failed</div>
+                <div style={{ fontSize: '12px', color: '#676c79' }}>{errorMsg}</div>
+              </div>
+            </div>
+          )}
+
+          {/* Example pills */}
+          {!isScanning && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '36px' }}>
+              {EXAMPLES.map(ex => (
+                <button key={ex} onClick={() => { setUrl(ex); scan(ex) }}
+                  style={{
+                    padding: '5px 12px', border: '1px solid #d4e8da', background: '#f8fffb',
+                    fontFamily: "'DM Mono', monospace", fontSize: '11px', color: '#676c79',
+                    cursor: 'pointer', letterSpacing: '0.02em',
+                  }}>
+                  {ex}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* AirOps demo divider */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ flex: 1, height: '1px', background: '#d4e8da' }} />
+            <span style={{ fontFamily: "'DM Mono', monospace", fontSize: '9px', color: '#a5aab6', letterSpacing: '0.08em', textTransform: 'uppercase' }}>or try demo</span>
+            <div style={{ flex: 1, height: '1px', background: '#d4e8da' }} />
           </div>
+          <button onClick={() => onLoad(AIROPS_BRAND)} style={{
+            width: '100%', padding: '11px 0', background: '#008c44', color: '#fff', border: 'none',
+            cursor: 'pointer', fontSize: '13px', fontWeight: 600,
+            fontFamily: "'DM Sans', sans-serif", letterSpacing: '0',
+          }}>
+            Load AirOps Brand Kit →
+          </button>
         </div>
       </div>
     </div>
@@ -489,7 +538,16 @@ function FoundationsView({ brand, onClear }: FoundationsViewProps) {
                 border: v.border ? '1px solid #d4e8da' : 'none',
                 display: 'flex', flexDirection: 'column', gap: '20px',
               }}>
-                <LogoWordmark fill={v.logoFill} size={28} />
+                {brand.logoSvg ? (
+                  <div
+                    style={{ maxWidth: '160px', filter: isLight(v.bg) ? 'none' : 'brightness(0) invert(1)' }}
+                    dangerouslySetInnerHTML={{ __html: brand.logoSvg }}
+                  />
+                ) : brand.logoUrl ? (
+                  <img src={brand.logoUrl} alt={brand.name} style={{ maxWidth: '160px', maxHeight: '48px', objectFit: 'contain', filter: isLight(v.bg) ? 'none' : 'brightness(0) invert(1)' }} />
+                ) : (
+                  <LogoWordmark fill={v.logoFill} size={28} />
+                )}
                 <div style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: v.labelColor, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                   {v.label} {v.token && `· ${v.token}`}
                 </div>
